@@ -34,11 +34,11 @@ import twitter4j.internal.org.json.JSONObject;
 import java.util.Arrays;
 import java.util.Date;
 
-import static twitter4j.ParseUtil.getBoolean;
-import static twitter4j.ParseUtil.getDate;
-import static twitter4j.ParseUtil.getInt;
-import static twitter4j.ParseUtil.getLong;
-import static twitter4j.ParseUtil.getUnescapedString;
+import static twitter4j.internal.util.ParseUtil.getBoolean;
+import static twitter4j.internal.util.ParseUtil.getDate;
+import static twitter4j.internal.util.ParseUtil.getInt;
+import static twitter4j.internal.util.ParseUtil.getLong;
+import static twitter4j.internal.util.ParseUtil.getUnescapedString;
 
 /**
  * A data class representing one single status of a user.
