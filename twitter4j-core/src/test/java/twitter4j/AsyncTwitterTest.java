@@ -38,6 +38,7 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
 
     private AsyncTwitter async1 = null;
     private AsyncTwitter async2 = null;
+    private AsyncTwitter bestFriend1Async = null;
     private ResponseList<Location> locations;
     private ResponseList<Place> places;
     private Place place;
@@ -57,6 +58,10 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
         async2 = factory.getInstance();
         async2.setOAuthConsumer(desktopConsumerKey,desktopConsumerSecret);
         async2.setOAuthAccessToken(new AccessToken(id2.accessToken, id2.accessTokenSecret));
+
+        bestFriend1Async = factory.getInstance();
+        bestFriend1Async.setOAuthConsumer(desktopConsumerKey,desktopConsumerSecret);
+        bestFriend1Async.setOAuthAccessToken(new AccessToken(bestFriend1.accessToken, bestFriend1.accessTokenSecret));
 
         statuses = null;
         users = null;
@@ -153,11 +158,11 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
     }
     public void testAccountProfileImageUpdates() throws Exception {
         te = null;
-        async1.updateProfileImage(TwitterTestUnit.getRandomlyChosenFile());
+        async1.updateProfileImage(TwitterTest.getRandomlyChosenFile());
         waitForResponse();
         assertNull(te);
         // tile randomly
-        async1.updateProfileBackgroundImage(TwitterTestUnit.getRandomlyChosenFile(),
+        async1.updateProfileBackgroundImage(TwitterTest.getRandomlyChosenFile(),
                 (5 < System.currentTimeMillis() % 5));
         waitForResponse();
         assertNull(te);
@@ -255,7 +260,7 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
         async1.updateProfile(oldName, null, oldURL, oldLocation, oldDescription);
         waitForResponse();
 
-        async1.existsFriendship(bestFriend1.screenName,bestFriend2.screenName);
+        bestFriend1Async.existsFriendship(bestFriend1.screenName,bestFriend2.screenName);
         waitForResponse();
         assertTrue(exists);
 

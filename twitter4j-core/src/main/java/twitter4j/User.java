@@ -220,4 +220,22 @@ public interface User extends Comparable<User>, TwitterResponse, java.io.Seriali
      * @since Twitter4J 2.0.10
      */
     boolean isVerified();
+
+    /**
+     * Returns the number of public lists the user is listed on, or -1
+     * if the count is unavailable.
+     *
+     * @return the number of public lists the user is listed on.
+     * @since Twitter4J 2.1.4
+     */
+    int getListedCount();
+
+    /**
+     * Returns true if the authenticating user has requested to follow this user,
+     * otherwise false.
+     *
+     * @return true if the authenticating user has requested to follow this user.
+     * @since Twitter4J 2.1.4
+     */
+    boolean isFollowRequestSent();
 }

@@ -85,6 +85,8 @@ public final class PropertyConfiguration extends ConfigurationBase implements ja
 
     public static final String ASYNC_NUM_THREADS = "async.numThreads";
     public static final String ASYNC_DISPATCHER_IMPL = "async.dispatherImpl";
+    public static final String INCLUDE_RTS = "includeRTs";
+    public static final String STREAM_USER_REPLIES_ALL = "stream.user.repliesAll";
 
     // hidden portion
     public static final String CLIENT_VERSION = "clientVersion";
@@ -327,6 +329,12 @@ public final class PropertyConfiguration extends ConfigurationBase implements ja
         }
         if (notNull(props, prefix, USER_STREAM_BASE_URL)) {
             setUserStreamBaseURL(getString(props, prefix, USER_STREAM_BASE_URL));
+        }
+        if (notNull(props, prefix, INCLUDE_RTS)) {
+            setIncludeRTsEnbled(getBoolean(props, prefix, INCLUDE_RTS));
+        }
+        if (notNull(props, prefix, STREAM_USER_REPLIES_ALL)) {
+            setUserStreamRepliesAllEnabled(getBoolean(props, prefix, STREAM_USER_REPLIES_ALL));
         }
     }
 

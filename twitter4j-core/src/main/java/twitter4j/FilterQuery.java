@@ -138,6 +138,7 @@ public final class FilterQuery implements java.io.Serializable {
      * Set whether to include extracted entities in the stream.
      * @param include True if entities should be included, else false.
      * @return this instance
+     * @since Twitter4J 2.1.4
      */
     public FilterQuery setIncludeEntities(boolean include) {
         includeEntities = include;

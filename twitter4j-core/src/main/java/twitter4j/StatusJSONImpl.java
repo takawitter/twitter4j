@@ -31,6 +31,8 @@ import twitter4j.internal.org.json.JSONArray;
 import twitter4j.internal.org.json.JSONException;
 import twitter4j.internal.org.json.JSONObject;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -57,11 +59,17 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     private String inReplyToScreenName;
     private GeoLocation geoLocation = null;
     private Place place = null;
+    private long retweetCount;
+    private boolean wasRetweetedByMe;
 
     private String[] contributors;
     private Annotations annotations = null;
 
     private Status retweetedStatus;
+    private User[] userMentions;
+    private URL[] urls;
+    private String[] hashtags;
+
     private static final long serialVersionUID = 1608000492860584608L;
 
     /*package*/StatusJSONImpl(HttpResponse res) throws TwitterException {
@@ -84,6 +92,8 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
         inReplyToUserId = getInt("in_reply_to_user_id", json);
         isFavorited = getBoolean("favorited", json);
         inReplyToScreenName = getUnescapedString("in_reply_to_screen_name", json);
+        retweetCount = getLong("retweet_count", json);
+        wasRetweetedByMe = getBoolean("retweeted", json);
         try {
             if (!json.isNull("user")) {
                 user = new UserJSONImpl(json.getJSONObject("user"));
@@ -116,6 +126,34 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
             }
         } else{
             contributors = null;
+        }
+        if (!json.isNull("entities")) {
+            try {
+                JSONObject entities = json.getJSONObject("entities");
+
+                JSONArray userMentionsArray = entities.getJSONArray("user_mentions");
+                userMentions = new User[userMentionsArray.length()];
+                for(int i=0;i<userMentionsArray.length();i++){
+                    userMentions[i] = new UserJSONImpl(userMentionsArray.getJSONObject(i));
+                }
+
+                JSONArray urlArray = entities.getJSONArray("urls");
+                urls = new URL[urlArray.length()];
+                for(int i=0;i<urlArray.length();i++){
+                    try {
+                        urls[i] = new URL(urlArray.getJSONObject(i).getString("url"));
+                    } catch (MalformedURLException e) {
+                        urls[i] = null;
+                    }
+                }
+
+                JSONArray hashtagsArray = entities.getJSONArray("hashtags");
+                hashtags = new String[hashtagsArray.length()];
+                for(int i=0;i<hashtagsArray.length();i++){
+                    hashtags[i] = hashtagsArray.getJSONObject(i).getString("text");
+                }
+            } catch (JSONException ignore) {
+            }
         }
         if (!json.isNull("annotations")) {
             try {
@@ -251,6 +289,41 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
      */
     public Status getRetweetedStatus() {
         return retweetedStatus;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getRetweetCount() {
+        return retweetCount;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isRetweetedByMe() {
+        return wasRetweetedByMe;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public User[] getUserMentions() {
+        return userMentions;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public URL[] getURLs() {
+        return urls;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String[] getHashtags() {
+        return hashtags;
     }
 
     /*package*/ static ResponseList<Status> createStatusList(HttpResponse res) throws TwitterException {

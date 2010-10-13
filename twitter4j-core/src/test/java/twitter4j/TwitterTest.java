@@ -30,15 +30,16 @@ import static twitter4j.DAOTest.assertDeserializedFormIsEqual;
 import static twitter4j.DAOTest.assertDeserializedFormIsNotEqual;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
  
 /**
  * @author Yusuke Yamamoto - yusuke at mac.com
  */
-public class TwitterTestUnit extends TwitterTestBase {
+public class TwitterTest extends TwitterTestBase {
 
-    public TwitterTestUnit(String name) {
+    public TwitterTest(String name) {
         super(name);
     }
 
@@ -126,6 +127,9 @@ public class TwitterTestUnit extends TwitterTestBase {
         assertFalse(user.isStatusFavorited());
         assertNull(user.getStatusInReplyToScreenName());
 
+        assertTrue(1 < user.getListedCount());
+        assertFalse(user.isFollowRequestSent());
+
         //test case for TFJ-91 null pointer exception getting user detail on users with no statuses
         //http://yusuke.homeip.net/jira/browse/TFJ-91
         twitterAPI1.showUser("twit4jnoupdate");
@@ -190,10 +194,6 @@ public class TwitterTestUnit extends TwitterTestBase {
 
         /*List Methods*/
         UserList userList;
-        //ensuring createUserList works in the case an email is specified a userid
-        userList = twitterAPI3.createUserList("api3 is email", false, null);
-        assertFalse(userList.isPublic());
-        twitterAPI3.destroyUserList(userList.getId());
         userList = twitterAPI1.createUserList("testpoint1", false, "description1");
         assertNotNull(userList);
         assertEquals("testpoint1", userList.getName());
@@ -348,6 +348,10 @@ public class TwitterTestUnit extends TwitterTestBase {
         } catch (TwitterException te) {
             assertEquals(400, te.getStatusCode());
         }
+
+        status = twitterAPI2.showStatus(1000l);
+        assertTrue(-1 <= status.getRetweetCount());
+        assertFalse(status.isRetweetedByMe());
     }
 
     public void testStatusMethods() throws Exception {
@@ -397,24 +401,24 @@ public class TwitterTestUnit extends TwitterTestBase {
         assertFalse(twitterAPI2.verifyCredentials().isGeoEnabled());
     }
 
-    public void testAnnotations() throws Exception {
-    	final String failMessage = 
-    		"Annotations were not added to the status, please make sure that your account is whitelisted for Annotations by Twitter";
-    	Annotation annotation = new Annotation("review");
-    	annotation.attribute("content", "Yahoo! landing page").
-    		attribute("url", "http://yahoo.com").attribute("rating", "0.6");
-    	
-    	StatusUpdate update = new StatusUpdate(new java.util.Date().toString() + ": annotated status");
-    	update.addAnnotation(annotation);
-    	
-        Status withAnnos = twitterAPI1.updateStatus(update);
-        Annotations annotations = withAnnos.getAnnotations();
-        assertNotNull(failMessage, annotations);
-        
-        List<Annotation> annos = annotations.getAnnotations();
-        assertEquals(1, annos.size());
-        assertEquals(annotation, annos.get(0));
-    }
+//    public void testAnnotations() throws Exception {
+//    	final String failMessage =
+//    		"Annotations were not added to the status, please make sure that your account is whitelisted for Annotations by Twitter";
+//    	Annotation annotation = new Annotation("review");
+//    	annotation.attribute("content", "Yahoo! landing page").
+//    		attribute("url", "http://yahoo.com").attribute("rating", "0.6");
+//
+//    	StatusUpdate update = new StatusUpdate(new java.util.Date().toString() + ": annotated status");
+//    	update.addAnnotation(annotation);
+//
+//        Status withAnnos = twitterAPI1.updateStatus(update);
+//        Annotations annotations = withAnnos.getAnnotations();
+//        assertNotNull(failMessage, annotations);
+//
+//        List<Annotation> annos = annotations.getAnnotations();
+//        assertEquals(1, annos.size());
+//        assertEquals(annotation, annos.get(0));
+//    }
     
     public void testGetFriendsStatuses() throws Exception {
         PagableResponseList<User> users = twitterAPI1.getFriendsStatuses();
@@ -570,9 +574,6 @@ public class TwitterTestUnit extends TwitterTestBase {
         } catch (TwitterException te) {
         }
 
-        twitterAPI1.updateDeliveryDevice(Device.SMS);
-        System.out.println("1---:" + bestFriend1.screenName);
-        System.out.println("2---:" + bestFriend2.screenName);
         assertTrue(twitterAPIBestFriend1.existsFriendship(bestFriend1.screenName, bestFriend2.screenName));
         assertFalse(twitterAPI1.existsFriendship(id1.screenName, "al3x"));
 
@@ -927,5 +928,22 @@ public class TwitterTestUnit extends TwitterTestBase {
         ids = twitterAPI1.getRetweetedByIDs(testStatusId, paging);
         assertTrue(ids.getIDs().length == 1);
         assertEquals(ids.getIDs()[0], 5933482);
+    }
+
+    public void testEntities() throws Exception {
+        Status status = twitterAPI2.showStatus(22035985122L);
+        assertEquals(2, status.getUserMentions().length);
+        assertEquals(1, status.getURLs().length);
+
+        User user1 = status.getUserMentions()[0];
+        assertEquals(20263710, user1.getId());
+        assertEquals("rabois", user1.getScreenName());
+        assertEquals("Keith Rabois", user1.getName());
+        assertEquals(new URL("http://j.mp/cHv0VS"), status.getURLs()[0]);
+
+        status = twitterAPI2.showStatus(22043496385L);
+        assertEquals(2, status.getHashtags().length);
+        assertEquals("pilaf", status.getHashtags()[0]);
+        assertEquals("recipe", status.getHashtags()[1]);
     }
 }
