@@ -69,7 +69,7 @@ public abstract class HttpResponse {
     protected InputStream is;
     private boolean streamConsumed = false;
 
-    public final int getStatusCode() {
+    public int getStatusCode() {
         return statusCode;
     }
 
@@ -85,7 +85,7 @@ public abstract class HttpResponse {
      * @throws TwitterException
      * @see #disconnect()
      */
-    public final InputStream asStream() {
+    public InputStream asStream() {
         if(streamConsumed){
             throw new IllegalStateException("Stream has already been consumed.");
         }
@@ -229,9 +229,9 @@ public abstract class HttpResponse {
 
     public final InputStreamReader asReader() {
         try {
-            return new InputStreamReader(is, "UTF-8");
+            return new InputStreamReader(asStream(), "UTF-8");
         } catch (java.io.UnsupportedEncodingException uee) {
-            return new InputStreamReader(is);
+            return new InputStreamReader(asStream());
         }
     }
 

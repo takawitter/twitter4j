@@ -497,7 +497,7 @@ public class Twitter extends TwitterOAuthSupportBaseImpl
      */
     public Status updateStatus(String status) throws TwitterException {
         ensureAuthorizationEnabled();
-        return new StatusJSONImpl(http.post(conf.getRestBaseURL() + "statuses/update.json",
+        return EntityFactory.getInstance().createStatus(http.post(conf.getRestBaseURL() + "statuses/update.json",
                 new HttpParameter[]{new HttpParameter("status", status), new HttpParameter("source", conf.getSource())}, auth));
     }
 
