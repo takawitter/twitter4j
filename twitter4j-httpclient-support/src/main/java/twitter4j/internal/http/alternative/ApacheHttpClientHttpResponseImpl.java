@@ -62,19 +62,11 @@ final class ApacheHttpClientHttpResponseImpl extends twitter4j.internal.http.Htt
     public Map<String, List<String>> getResponseHeaderFields() {
         Header[] headers = res.getAllHeaders();
         Map<String, List<String>> maps = new HashMap<String, List<String>>();
-<<<<<<< HEAD
-        for(Header header : headers){
-            HeaderElement[] elements = header.getElements();
-            for(HeaderElement element : elements){
-                List<String> values;
-                if(null == (values = maps.get(element.getName()))){
-=======
         for (Header header : headers) {
             HeaderElement[] elements = header.getElements();
             for (HeaderElement element : elements) {
                 List<String> values;
                 if (null == (values = maps.get(element.getName()))) {
->>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
                     values = new ArrayList<String>(1);
                     maps.put(element.getName(), values);
                 }

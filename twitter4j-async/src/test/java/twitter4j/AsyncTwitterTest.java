@@ -57,16 +57,10 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
 //        async1.setOAuthConsumer(desktopConsumerKey, desktopConsumerSecret);
 //        async1.setOAuthAccessToken(new AccessToken(id1.accessToken, id1.accessTokenSecret));
 
-<<<<<<< HEAD:twitter4j-core/src/test/java/twitter4j/AsyncTwitterTest.java
-        async2 = factory.getInstance();
-        async2.setOAuthConsumer(desktopConsumerKey,desktopConsumerSecret);
-        async2.setOAuthAccessToken(new AccessToken(id2.accessToken, id2.accessTokenSecret));
-=======
         async2 = new AsyncTwitterFactory(conf2).getInstance();
         async2.addListener(this);
 //        async2.setOAuthConsumer(desktopConsumerKey, desktopConsumerSecret);
 //        async2.setOAuthAccessToken(new AccessToken(id2.accessToken, id2.accessTokenSecret));
->>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21:twitter4j-async/src/test/java/twitter4j/AsyncTwitterTest.java
 
         bestFriend1Async = new AsyncTwitterFactory(bestFriend1Conf).getInstance();
         bestFriend1Async.addListener(this);
@@ -90,11 +84,7 @@ public class AsyncTwitterTest extends TwitterTestBase implements TwitterListener
     public void testGetPublicTimeline() throws Exception {
         async1.getPublicTimeline();
         waitForResponse();
-<<<<<<< HEAD:twitter4j-core/src/test/java/twitter4j/AsyncTwitterTest.java
-        assertTrue("size", 0 < statuses.size());
-=======
         Assert.assertTrue("size", 0 < statuses.size());
->>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21:twitter4j-async/src/test/java/twitter4j/AsyncTwitterTest.java
         assertDeserializedFormIsEqual(statuses);
     }
 
