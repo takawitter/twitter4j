@@ -1,35 +1,28 @@
 /*
-Copyright (c) 2007-2010, Yusuke Yamamoto
-All rights reserved.
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Yusuke Yamamoto nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY Yusuke Yamamoto ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Yusuke Yamamoto BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 package twitter4j;
 
+import twitter4j.conf.Configuration;
 import twitter4j.internal.http.HttpResponse;
+import twitter4j.internal.json.DataObjectFactoryUtil;
 import twitter4j.internal.org.json.JSONArray;
 import twitter4j.internal.org.json.JSONException;
 import twitter4j.internal.org.json.JSONObject;
+import twitter4j.internal.util.ParseUtil;
 
 /**
  * @author Yusuke Yamamoto - yusuke at mac.com
@@ -39,24 +32,40 @@ final class CategoryJSONImpl implements Category, java.io.Serializable {
 
     private String name;
     private String slug;
+    private int size;
     private static final long serialVersionUID = -6703617743623288566L;
 
-    CategoryJSONImpl(String name, String slug){
-        this.name = name;
-        this.slug = slug;
+    CategoryJSONImpl(JSONObject json) throws JSONException {
+        init(json);
     }
 
-    public static ResponseList<Category> createCategoriesList(HttpResponse res) throws TwitterException {
-        return createCategoriesList(res.asJSONArray(), res);
+    void init(JSONObject json) throws JSONException {
+        this.name = json.getString("name");
+        this.slug = json.getString("slug");
+        this.size = ParseUtil.getInt("size", json);
     }
 
-    public static ResponseList<Category> createCategoriesList(JSONArray array, HttpResponse res) throws TwitterException {
+    static ResponseList<Category> createCategoriesList(HttpResponse res, Configuration conf) throws TwitterException {
+        return createCategoriesList(res.asJSONArray(), res, conf);
+    }
+
+    static ResponseList<Category> createCategoriesList(JSONArray array, HttpResponse res, Configuration conf) throws TwitterException {
         try {
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.clearThreadLocalMap();
+            }
             ResponseList<Category> categories =
                     new ResponseListImpl<Category>(array.length(), res);
             for (int i = 0; i < array.length(); i++) {
                 JSONObject json = array.getJSONObject(i);
-                categories.add(new CategoryJSONImpl(json.getString("name"), json.getString("slug")));
+                Category category = new CategoryJSONImpl(json);
+                categories.add(category);
+                if (conf.isJSONStoreEnabled()) {
+                    DataObjectFactoryUtil.registerJSONObject(category, json);
+                }
+            }
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.registerJSONObject(categories, array);
             }
             return categories;
         } catch (JSONException jsone) {
@@ -72,6 +81,14 @@ final class CategoryJSONImpl implements Category, java.io.Serializable {
         return slug;
     }
 
+    /**
+     * @return
+     * @since Twitter4J 2.1.9
+     */
+    public int getSize() {
+        return size;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +96,7 @@ final class CategoryJSONImpl implements Category, java.io.Serializable {
 
         CategoryJSONImpl that = (CategoryJSONImpl) o;
 
+        if (size != that.size) return false;
         if (name != null ? !name.equals(that.name) : that.name != null)
             return false;
         if (slug != null ? !slug.equals(that.slug) : that.slug != null)
@@ -91,6 +109,7 @@ final class CategoryJSONImpl implements Category, java.io.Serializable {
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (slug != null ? slug.hashCode() : 0);
+        result = 31 * result + size;
         return result;
     }
 
@@ -99,6 +118,7 @@ final class CategoryJSONImpl implements Category, java.io.Serializable {
         return "CategoryJSONImpl{" +
                 "name='" + name + '\'' +
                 ", slug='" + slug + '\'' +
+                ", size=" + size +
                 '}';
     }
 }

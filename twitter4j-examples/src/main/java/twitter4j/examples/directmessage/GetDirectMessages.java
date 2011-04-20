@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
 Copyright (c) 2007-2010, Yusuke Yamamoto
 All rights reserved.
 
@@ -27,6 +28,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package twitter4j.examples.directmessage;
 
 import twitter4j.*;
+=======
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package twitter4j.examples.directmessage;
+
+import twitter4j.DirectMessage;
+import twitter4j.Paging;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
 
 import java.util.List;
 
@@ -49,12 +74,24 @@ public class GetDirectMessages {
             do {
                 messages = twitter.getDirectMessages(paging);
                 for (DirectMessage message : messages) {
+<<<<<<< HEAD
                     System.out.println("From: @" + message.getSenderScreenName() + " " + message.getText());
                 }
                 paging.setPage(paging.getPage() + 1);
             } while (messages.size() > 0);
             System.exit(0);
         } catch (TwitterException te) {
+=======
+                    System.out.println("From: @" + message.getSenderScreenName() + " id:" + message.getId() + " - "
+                            + message.getText());
+                }
+                paging.setPage(paging.getPage() + 1);
+            } while (messages.size() > 0 && paging.getPage() < 10);
+            System.out.println("done.");
+            System.exit(0);
+        } catch (TwitterException te) {
+            te.printStackTrace();
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
             System.out.println("Failed to get messages: " + te.getMessage());
             System.exit(-1);
         }

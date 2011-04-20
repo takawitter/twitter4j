@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
 Copyright (c) 2007-2010, Yusuke Yamamoto
 All rights reserved.
 
@@ -24,6 +25,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+=======
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
 package twitter4j.examples.directmessage;
 
 import twitter4j.DirectMessage;
@@ -31,7 +49,10 @@ import twitter4j.Paging;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+<<<<<<< HEAD
 import twitter4j.User;
+=======
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
 
 import java.util.List;
 
@@ -53,9 +74,15 @@ public final class GetSentDirectMessages {
             List<DirectMessage> directMessages;
             do {
                 directMessages = twitter.getSentDirectMessages(page);
+<<<<<<< HEAD
                 for (DirectMessage directMessage : directMessages) {
                     System.out.println("To: @" + directMessage.getRecipientScreenName() + " - "
                             + directMessage.getText());
+=======
+                for (DirectMessage message : directMessages) {
+                    System.out.println("To: @" + message.getRecipientScreenName() + " id:" + message.getId() + " - "
+                            + message.getText());
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
                 }
                 page.setPage(page.getPage() + 1);
             } while (directMessages.size() > 0 && page.getPage() < 10);

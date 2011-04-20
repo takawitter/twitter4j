@@ -1,65 +1,69 @@
 /*
-Copyright (c) 2007-2010, Yusuke Yamamoto
-All rights reserved.
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Yusuke Yamamoto nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY Yusuke Yamamoto ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Yusuke Yamamoto BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 package twitter4j;
 
+import twitter4j.conf.Configuration;
 import twitter4j.internal.http.HttpResponse;
+import twitter4j.internal.json.DataObjectFactoryUtil;
 import twitter4j.internal.org.json.JSONArray;
 import twitter4j.internal.org.json.JSONException;
 import twitter4j.internal.org.json.JSONObject;
 
 import java.util.Date;
-import static twitter4j.internal.util.ParseUtil.*;
+
+import static twitter4j.internal.util.ParseUtil.getDate;
+import static twitter4j.internal.util.ParseUtil.getLong;
+import static twitter4j.internal.util.ParseUtil.getUnescapedString;
+
 /**
  * A data class representing sent/received direct message.
+ *
  * @author Yusuke Yamamoto - yusuke at mac.com
  */
 /*package*/ final class DirectMessageJSONImpl extends TwitterResponseImpl implements DirectMessage, java.io.Serializable {
-    private int id;
+    private static final long serialVersionUID = -7104233663827757577L;
+    private long id;
     private String text;
-    private int senderId;
-    private int recipientId;
+    private long senderId;
+    private long recipientId;
     private Date createdAt;
     private String senderScreenName;
     private String recipientScreenName;
-    private static final long serialVersionUID = -3253021825891789737L;
 
 
-    /*package*/DirectMessageJSONImpl(HttpResponse res) throws TwitterException {
+    /*package*/DirectMessageJSONImpl(HttpResponse res, Configuration conf) throws TwitterException {
         super(res);
-        init(res.asJSONObject());
+        JSONObject json = res.asJSONObject();
+        init(json);
+        if (conf.isJSONStoreEnabled()) {
+            DataObjectFactoryUtil.clearThreadLocalMap();
+            DataObjectFactoryUtil.registerJSONObject(this, json);
+        }
     }
+
     /*package*/DirectMessageJSONImpl(JSONObject json) throws TwitterException {
         init(json);
     }
-    private void init(JSONObject json) throws TwitterException{
-        id = getInt("id", json);
+
+    private void init(JSONObject json) throws TwitterException {
+        id = getLong("id", json);
         text = getUnescapedString("text", json);
-        senderId = getInt("sender_id", json);
-        recipientId = getInt("recipient_id", json);
+        senderId = getLong("sender_id", json);
+        recipientId = getLong("recipient_id", json);
         createdAt = getDate("created_at", json);
         senderScreenName = getUnescapedString("sender_screen_name", json);
         recipientScreenName = getUnescapedString("recipient_screen_name", json);
@@ -74,7 +78,7 @@ import static twitter4j.internal.util.ParseUtil.*;
     /**
      * {@inheritDoc}
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -88,14 +92,14 @@ import static twitter4j.internal.util.ParseUtil.*;
     /**
      * {@inheritDoc}
      */
-    public int getSenderId() {
+    public long getSenderId() {
         return senderId;
     }
 
     /**
      * {@inheritDoc}
      */
-    public int getRecipientId() {
+    public long getRecipientId() {
         return recipientId;
     }
 
@@ -138,13 +142,25 @@ import static twitter4j.internal.util.ParseUtil.*;
         return recipient;
     }
 
-    /*package*/ static ResponseList<DirectMessage> createDirectMessageList(HttpResponse res) throws TwitterException {
+    /*package*/
+    static ResponseList<DirectMessage> createDirectMessageList(HttpResponse res, Configuration conf) throws TwitterException {
         try {
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.clearThreadLocalMap();
+            }
             JSONArray list = res.asJSONArray();
             int size = list.length();
             ResponseList<DirectMessage> directMessages = new ResponseListImpl<DirectMessage>(size, res);
             for (int i = 0; i < size; i++) {
-                directMessages.add(new DirectMessageJSONImpl(list.getJSONObject(i)));
+                JSONObject json = list.getJSONObject(i);
+                DirectMessage directMessage = new DirectMessageJSONImpl(json);
+                directMessages.add(directMessage);
+                if (conf.isJSONStoreEnabled()) {
+                    DataObjectFactoryUtil.registerJSONObject(directMessage, json);
+                }
+            }
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.registerJSONObject(directMessages, list);
             }
             return directMessages;
         } catch (JSONException jsone) {
@@ -156,7 +172,7 @@ import static twitter4j.internal.util.ParseUtil.*;
 
     @Override
     public int hashCode() {
-        return id;
+        return (int) id;
     }
 
     @Override

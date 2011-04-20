@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
 Copyright (c) 2007-2010, Yusuke Yamamoto
 All rights reserved.
 
@@ -24,6 +25,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+=======
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
 package twitter4j.examples.geo;
 
 import twitter4j.Place;
@@ -33,7 +51,10 @@ import twitter4j.TwitterFactory;
 
 /**
  * Shows specified place's detailed information
+<<<<<<< HEAD
  * Destroys specified status.
+=======
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
  *
  * @author Yusuke Yamamoto - yusuke at mac.com
  */
@@ -58,6 +79,16 @@ public final class GetGeoDetails {
             System.out.println("id: " + place.getId());
             System.out.println("place type: " + place.getPlaceType());
             System.out.println("street address: " + place.getStreetAddress());
+<<<<<<< HEAD
+=======
+            Place[] containedWithinArray = place.getContainedWithIn();
+            if (null != containedWithinArray && containedWithinArray.length != 0) {
+                System.out.println("  contained within:");
+                for (Place containedWithinPlace : containedWithinArray) {
+                    System.out.println("  id: " + containedWithinPlace.getId() + " name: " + containedWithinPlace.getFullName());
+                }
+            }
+>>>>>>> e94561b24ae0ceb99f9e34e52703c85a6849ea21
             System.exit(0);
         } catch (TwitterException te) {
             te.printStackTrace();

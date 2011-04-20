@@ -1,54 +1,45 @@
 /*
-Copyright (c) 2007-2010, Yusuke Yamamoto
-All rights reserved.
+ * Copyright 2007 Yusuke Yamamoto
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Yusuke Yamamoto nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY Yusuke Yamamoto ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Yusuke Yamamoto BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 package twitter4j;
 
+import twitter4j.conf.Configuration;
 import twitter4j.internal.http.HttpResponse;
+import twitter4j.internal.json.DataObjectFactoryUtil;
 import twitter4j.internal.logging.Logger;
 import twitter4j.internal.org.json.JSONArray;
 import twitter4j.internal.org.json.JSONException;
 import twitter4j.internal.org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 
 import static twitter4j.internal.util.ParseUtil.getBoolean;
 import static twitter4j.internal.util.ParseUtil.getDate;
-import static twitter4j.internal.util.ParseUtil.getInt;
 import static twitter4j.internal.util.ParseUtil.getLong;
 import static twitter4j.internal.util.ParseUtil.getUnescapedString;
 
 /**
  * A data class representing one single status of a user.
+ *
  * @author Yusuke Yamamoto - yusuke at mac.com
  */
 /*package*/ final class StatusJSONImpl extends TwitterResponseImpl implements Status, java.io.Serializable {
     private static final Logger logger = Logger.getLogger(StatusJSONImpl.class);
+    private static final long serialVersionUID = 7548618898682727465L;
 
     private Date createdAt;
     private long id;
@@ -56,7 +47,7 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     private String source;
     private boolean isTruncated;
     private long inReplyToStatusId;
-    private int inReplyToUserId;
+    private long inReplyToUserId;
     private boolean isFavorited;
     private String inReplyToScreenName;
     private GeoLocation geoLocation = null;
@@ -68,18 +59,21 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     private Annotations annotations = null;
 
     private Status retweetedStatus;
-    private User[] userMentions;
-    private URL[] urls;
-    private String[] hashtags;
+    private UserMentionEntity[] userMentionEntities;
+    private URLEntity[] urlEntities;
+    private HashtagEntity[] hashtagEntities;
 
-    private static final long serialVersionUID = 1608000492860584608L;
-
-    /*package*/StatusJSONImpl(HttpResponse res) throws TwitterException {
+    /*package*/StatusJSONImpl(HttpResponse res, Configuration conf) throws TwitterException {
         super(res);
-        init(res.asJSONObject());
+        JSONObject json = res.asJSONObject();
+        init(json);
+        if (conf.isJSONStoreEnabled()) {
+            DataObjectFactoryUtil.clearThreadLocalMap();
+            DataObjectFactoryUtil.registerJSONObject(this, json);
+        }
     }
 
-    /*package*/ StatusJSONImpl(JSONObject json) throws TwitterException, JSONException {
+    /*package*/ StatusJSONImpl(JSONObject json) throws TwitterException {
         super();
         init(json);
     }
@@ -91,7 +85,7 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
         createdAt = getDate("created_at", json);
         isTruncated = getBoolean("truncated", json);
         inReplyToStatusId = getLong("in_reply_to_status_id", json);
-        inReplyToUserId = getInt("in_reply_to_user_id", json);
+        inReplyToUserId = getLong("in_reply_to_user_id", json);
         isFavorited = getBoolean("favorited", json);
         inReplyToScreenName = getUnescapedString("in_reply_to_screen_name", json);
         retweetCount = getLong("retweet_count", json);
@@ -106,7 +100,7 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
         geoLocation = GeoLocation.getInstance(json);
         if (!json.isNull("place")) {
             try {
-                place = new PlaceJSONImpl(json.getJSONObject("place"), null);
+                place = new PlaceJSONImpl(json.getJSONObject("place"));
             } catch (JSONException ignore) {
                 ignore.printStackTrace();
                 logger.warn("failed to parse place:" + json);
@@ -125,14 +119,14 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
             try {
                 JSONArray contributorsArray = json.getJSONArray("contributors");
                 contributors = new String[contributorsArray.length()];
-                for(int i=0;i<contributorsArray.length();i++){
+                for (int i = 0; i < contributorsArray.length(); i++) {
                     contributors[i] = contributorsArray.getString(i);
                 }
             } catch (JSONException ignore) {
                 ignore.printStackTrace();
                 logger.warn("failed to parse contributors:" + json);
             }
-        } else{
+        } else {
             contributors = null;
         }
         if (!json.isNull("entities")) {
@@ -140,25 +134,24 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
                 JSONObject entities = json.getJSONObject("entities");
 
                 JSONArray userMentionsArray = entities.getJSONArray("user_mentions");
-                userMentions = new User[userMentionsArray.length()];
-                for(int i=0;i<userMentionsArray.length();i++){
-                    userMentions[i] = new UserJSONImpl(userMentionsArray.getJSONObject(i));
+                int len = userMentionsArray.length();
+                userMentionEntities = new UserMentionEntity[len];
+                for (int i = 0; i < len; i++) {
+                    userMentionEntities[i] = new UserMentionEntityJSONImpl(userMentionsArray.getJSONObject(i));
                 }
 
-                JSONArray urlArray = entities.getJSONArray("urls");
-                urls = new URL[urlArray.length()];
-                for(int i=0;i<urlArray.length();i++){
-                    try {
-                        urls[i] = new URL(urlArray.getJSONObject(i).getString("url"));
-                    } catch (MalformedURLException e) {
-                        urls[i] = null;
-                    }
+                JSONArray urlsArray = entities.getJSONArray("urls");
+                len = urlsArray.length();
+                urlEntities = new URLEntity[len];
+                for (int i = 0; i < len; i++) {
+                    urlEntities[i] = new URLEntityJSONImpl(urlsArray.getJSONObject(i));
                 }
 
                 JSONArray hashtagsArray = entities.getJSONArray("hashtags");
-                hashtags = new String[hashtagsArray.length()];
-                for(int i=0;i<hashtagsArray.length();i++){
-                    hashtags[i] = hashtagsArray.getJSONObject(i).getString("text");
+                len = hashtagsArray.length();
+                hashtagEntities = new HashtagEntity[len];
+                for (int i = 0; i < len; i++) {
+                    hashtagEntities[i] = new HashtagEntityJSONImpl(hashtagsArray.getJSONObject(i));
                 }
             } catch (JSONException ignore) {
             }
@@ -228,7 +221,7 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     /**
      * {@inheritDoc}
      */
-    public int getInReplyToUserId() {
+    public long getInReplyToUserId() {
         return inReplyToUserId;
     }
 
@@ -242,14 +235,14 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     /**
      * {@inheritDoc}
      */
-    public GeoLocation getGeoLocation(){
+    public GeoLocation getGeoLocation() {
         return geoLocation;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Place getPlace(){
+    public Place getPlace() {
         return place;
     }
 
@@ -260,15 +253,15 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
         return contributors;
     }
 
-    
-	/**
+
+    /**
      * {@inheritDoc}
      */
     public Annotations getAnnotations() {
-		return annotations;
-	}
+        return annotations;
+    }
 
-	/**
+    /**
      * {@inheritDoc}
      */
     public boolean isFavorited() {
@@ -288,7 +281,7 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     /**
      * {@inheritDoc}
      */
-    public boolean isRetweet(){
+    public boolean isRetweet() {
         return null != retweetedStatus;
     }
 
@@ -316,31 +309,43 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
     /**
      * {@inheritDoc}
      */
-    public User[] getUserMentions() {
-        return userMentions;
+    public UserMentionEntity[] getUserMentionEntities() {
+        return userMentionEntities;
     }
 
     /**
      * {@inheritDoc}
      */
-    public URL[] getURLs() {
-        return urls;
+    public URLEntity[] getURLEntities() {
+        return urlEntities;
     }
 
     /**
      * {@inheritDoc}
      */
-    public String[] getHashtags() {
-        return hashtags;
+    public HashtagEntity[] getHashtagEntities() {
+        return hashtagEntities;
     }
 
-    /*package*/ static ResponseList<Status> createStatusList(HttpResponse res) throws TwitterException {
+    /*package*/
+    static ResponseList<Status> createStatusList(HttpResponse res, Configuration conf) throws TwitterException {
         try {
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.clearThreadLocalMap();
+            }
             JSONArray list = res.asJSONArray();
             int size = list.length();
             ResponseList<Status> statuses = new ResponseListImpl<Status>(size, res);
             for (int i = 0; i < size; i++) {
-                statuses.add(new StatusJSONImpl(list.getJSONObject(i)));
+                JSONObject json = list.getJSONObject(i);
+                Status status = new StatusJSONImpl(json);
+                if (conf.isJSONStoreEnabled()) {
+                    DataObjectFactoryUtil.registerJSONObject(status, json);
+                }
+                statuses.add(status);
+            }
+            if (conf.isJSONStoreEnabled()) {
+                DataObjectFactoryUtil.registerJSONObject(statuses, list);
             }
             return statuses;
         } catch (JSONException jsone) {
@@ -380,9 +385,14 @@ import static twitter4j.internal.util.ParseUtil.getUnescapedString;
                 ", inReplyToScreenName='" + inReplyToScreenName + '\'' +
                 ", geoLocation=" + geoLocation +
                 ", place=" + place +
+                ", retweetCount=" + retweetCount +
+                ", wasRetweetedByMe=" + wasRetweetedByMe +
                 ", contributors=" + (contributors == null ? null : Arrays.asList(contributors)) +
                 ", annotations=" + annotations +
                 ", retweetedStatus=" + retweetedStatus +
+                ", userMentionEntities=" + (userMentionEntities == null ? null : Arrays.asList(userMentionEntities)) +
+                ", urlEntities=" + (urlEntities == null ? null : Arrays.asList(urlEntities)) +
+                ", hashtagEntities=" + (hashtagEntities == null ? null : Arrays.asList(hashtagEntities)) +
                 ", user=" + user +
                 '}';
     }
