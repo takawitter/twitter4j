@@ -1,0 +1,8 @@
+<project default="dist">
+	<target name="dist">
+		<jar basedir="target/classes" jarfile="target/twitter4j-gaeasync-2.2.2-SNAPSHOT.jar"
+			includes="**/*">
+			</jar>
+		
+	</target>
+</project>
